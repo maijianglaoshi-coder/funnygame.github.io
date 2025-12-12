@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <title>班级积分系统</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Safari特定优化 */
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: 100%;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            overflow-x: hidden;
+        }
+        
+        /* 触摸友好的按钮样式 */
+        .touch-button {
+            min-height: 44px;
+            min-width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+        
+        /* 自定义滚动条样式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+        .bounce {
+            animation: bounce 1s;
+        }
+        
+        /* 学生卡片悬停效果 */
+        .student-card {
+            transition: all 0.3s ease;
+        }
+        .student-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        /* 班级卡片样式 */
+        .class-card {
+            transition: all 0.3s ease;
+        }
+        .class-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* 分组卡片样式 */
+        .group-card {
+            transition: all 0.3s ease;
+        }
+        .group-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* iPad Safari优化布局 */
+        @media (max-width: 1024px) {
+            .student-card {
+                min-height: 180px;
+            }
+            
+            .menu-button {
+                padding: 12px 16px;
+                font-size: 16px;
+            }
+        }
+        
+        /* 防止iOS缩放和表单样式问题 */
+        input, select, textarea {
+            font-size: 16px !important;
+            border-radius: 8px;
+            -webkit-appearance: none;
+        }
+        
+        /* Safari下拉箭头样式修复 */
+        select {
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+        
+        /* 模态框优化 */
+        .modal-container {
+            max-height: 85vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 按钮激活状态 */
+        button:active {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+        
+        /* 防止长按菜单 */
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+        }
+        
+        /* 允许输入框选择文本 */
+        input, textarea {
+            -webkit-user-select: text;
+        }
+        
+        /* 随机点名动画 */
+        @keyframes randomCall {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .random-call-animation {
+            animation: randomCall 0.5s infinite;
+        }
+        
+        /* 高亮选中学生 */
+        .selected-student {
+            background-color: #fef3c7;
+            border: 2px solid #f59e0b;
+            transform: scale(1.05);
+        }
+        
+        /* 分组颜色 */
+        .group-1 { border-left: 4px solid #3b82f6; }
+        .group-2 { border-left: 4px solid #ef4444; }
+        .group-3 { border-left: 4px solid #10b981; }
+        .group-4 { border-left: 4px solid #f59e0b; }
+        .group-5 { border-left: 4px solid #8b5cf6; }
+        .group-6 { border-left: 4px solid #06b6d4; }
+        
+        /* 选项卡样式 */
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        /* 历史记录样式 */
+        .history-item {
+            border-left: 3px solid #ef4444;
+            padding-left: 12px;
+            margin-bottom: 10px;
+        }
+        
+        /* 加载动画 */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen">
+    <!-- 加载界面 -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="loader mx-auto mb-4"></div>
+            <h2 class="text-xl font-bold text-blue-600">班级积分系统</h2>
+            <p class="text-gray-500 mt-2">加载中...</p>
+        </div>
+    </div>
+    
+    <!-- 主应用界面 -->
+    <div id="app" class="container mx-auto px-4 py-6 hidden">
+        <!-- 标题和班级选择 -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+            <h1 id="classTitle" class="text-3xl md:text-4xl font-bold text-blue-600 inline-flex items-center mb-4 md:mb-0">
+                班级积分系统
+                <span class="ml-2 text-yellow-500">✨</span>
+            </h1>
+            
+            <div class="flex items-center space-x-2">
+                <select id="classSelector" class="bg-white border border-gray-300 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 touch-button">
+                    <!-- 班级选项将通过JavaScript动态生成 -->
+                </select>
+                <button id="manageClasses" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg touch-button">
+                    <i class="fas fa-cog mr-2"></i> 管理
+                </button>
+            </div>
+        </div>
+        
+        <!-- 菜单栏 -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-8">
+            <div class="flex flex-wrap justify-center gap-3">
+                <!-- 全班加分按钮 -->
+                <button id="addAllPoints" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-users mr-2"></i>全班加分
+                </button>
+                
+                <!-- 全班清零按钮 -->
+                <button id="resetAllPoints" class="bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-undo mr-2"></i>全班清零
+                </button>
+                
+                <!-- 排行榜按钮 -->
+                <button id="showRanking" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-trophy mr-2"></i>排行榜
+                </button>
+                
+                <!-- 导入积分按钮 -->
+                <button id="importPoints" class="bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-file-import mr-2"></i>导入
+                </button>
+                
+                <!-- 导出积分按钮 -->
+                <button id="exportPoints" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-file-export mr-2"></i>导出
+                </button>
+                
+                <!-- 添加学生按钮 -->
+                <button id="addStudent" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-user-plus mr-2"></i>添加
+                </button>
+                
+                <!-- 批量添加学生按钮 -->
+                <button id="batchAddStudents" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-users mr-2"></i>批量
+                </button>
+                
+                <!-- 随机点名按钮 -->
+                <button id="randomCall" class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-random mr-2"></i>随机点名
+                </button>
+                
+                <!-- 分组管理按钮 -->
+                <button id="manageGroups" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-object-group mr-2"></i>分组管理
+                </button>
+                
+                <!-- 历史记录按钮 -->
+                <button id="showHistory" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition flex items-center text-lg menu-button touch-button">
+                    <i class="fas fa-history mr-2"></i>历史记录
+                </button>
+            </div>
+        </div>
+        
+        <!-- 视图切换选项卡 -->
+        <div class="flex mb-4 bg-white rounded-lg p-1 shadow-sm">
+            <button id="viewAll" class="flex-1 py-3 rounded-lg tab-button active touch-button" data-view="all">
+                <i class="fas fa-users mr-2"></i>全部学生
+            </button>
+            <button id="viewByGroup" class="flex-1 py-3 rounded-lg tab-button touch-button" data-view="group">
+                <i class="fas fa-object-group mr-2"></i>按组查看
+            </button>
+        </div>
+        
+        <!-- 学生操作网格 -->
+        <div id="studentGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-8">
+            <!-- 学生卡片将通过JavaScript动态生成 -->
+        </div>
+        
+        <!-- 分组视图 -->
+        <div id="groupView" class="hidden mb-8">
+            <div id="groupsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 分组将通过JavaScript动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 提示信息 -->
+        <div id="message" class="fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 hidden text-lg"></div>
+        
+        <!-- 页脚 -->
+        <footer class="text-center text-gray-500 mt-12 pb-6">
+            <p>班级积分系统 &copy; 2023 - 专为教师设计</p>
+            <p class="text-sm mt-2">数据保存在本地浏览器中，刷新页面不会丢失</p>
+        </footer>
+    </div>
+    
+    <!-- 模态框区域 -->
+    <!-- 全班加分模态框 -->
+    <div id="addAllPointsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md fade-in modal-container">
+            <h3 class="text-xl font-bold mb-4">全班加分</h3>
+            <p class="mb-4 text-gray-600">请输入要增加的分数：</p>
+            <input type="number" id="pointsInput" class="w-full p-4 border border-gray-300 rounded-lg mb-4 text-lg" value="1" min="1">
+            <div class="flex justify-end gap-2">
+                <button id="cancelAddAllPoints" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">取消</button>
+                <button id="confirmAddAllPoints" class="px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition text-lg touch-button">确定</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 扣分原因模态框 -->
+    <div id="deductPointsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md fade-in modal-container">
+            <h3 class="text-xl font-bold mb-4">扣分原因</h3>
+            <p class="mb-4 text-gray-600">请选择或输入扣分原因：</p>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">快速选择：</label>
+                <div class="grid grid-cols-1 gap-2 mb-4">
+                    <button class="quick-reason px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left" data-reason="ไม่มีอุปกรณ์การเรียน">
+                        <i class="fas fa-pencil-alt mr-2 text-blue-500"></i>ไม่มีอุปกรณ์การเรียน
+                    </button>
+                    <button class="quick-reason px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left" data-reason="ไม่เคารพกติกา">
+                        <i class="fas fa-gavel mr-2 text-red-500"></i>ไม่เคารพกติกา
+                    </button>
+                    <button class="quick-reason px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-left" data-reason="ไม่ส่งงาน">
+                        <i class="fas fa-book mr-2 text-green-500"></i>ไม่ส่งงาน
+                    </button>
+                </div>
+                <label class="block text-gray-700 mb-2">自定义原因：</label>
+                <textarea id="deductReason" class="w-full p-3 border border-gray-300 rounded-lg text-lg" placeholder="请输入其他扣分原因"></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button id="cancelDeductPoints" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">取消</button>
+                <button id="confirmDeductPoints" class="px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition text-lg touch-button">确认扣分</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加学生模态框 -->
+    <div id="addStudentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md fade-in modal-container">
+            <h3 class="text-xl font-bold mb-4">添加学生</h3>
+            <p class="mb-4 text-gray-600">请输入学生姓名：</p>
+            <input type="text" id="studentNameInput" class="w-full p-4 border border-gray-300 rounded-lg mb-4 text-lg" placeholder="学生姓名">
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">选择分组：</label>
+                <select id="studentGroupSelect" class="w-full p-3 border border-gray-300 rounded-lg text-lg">
+                    <option value="0">未分组</option>
+                    <!-- 分组选项将通过JavaScript动态生成 -->
+                </select>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button id="cancelAddStudent" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">取消</button>
+                <button id="confirmAddStudent" class="px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition text-lg touch-button">确定</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 批量添加学生模态框 -->
+    <div id="batchAddStudentsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md fade-in modal-container">
+            <h3 class="text-xl font-bold mb-4">批量添加学生</h3>
+            <p class="mb-4 text-gray-600">请输入学生姓名，每行一个：</p>
+            <textarea id="batchStudentNames" class="w-full h-48 p-4 border border-gray-300 rounded-lg mb-4 text-lg" placeholder="例如：
+张三
+李四
+王五"></textarea>
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-lg text-gray-500">已输入 <span id="studentCount">0</span> 个学生</div>
+                <button id="clearBatchInput" class="text-lg text-red-500 hover:text-red-700 touch-button">清空输入</button>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button id="cancelBatchAddStudents" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">取消</button>
+                <button id="confirmBatchAddStudents" class="px-4 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition text-lg touch-button">确定</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 排行榜模态框 -->
+    <div id="rankingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto custom-scrollbar fade-in modal-container">
+            <h3 class="text-xl font-bold mb-4">积分排行榜</h3>
+            <div id="rankingList" class="space-y-3">
+                <!-- 排行榜内容将通过JavaScript动态生成 -->
+            </div>
+            <div class="flex justify-end mt-4">
+                <button id="closeRanking" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 班级管理模态框 -->
+    <div id="manageClassesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto custom-scrollbar fade-in modal-container">
+            <h3 class="text-xl font-bold mb-4">班级管理</h3>
+            
+            <!-- 添加新班级 -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                <h4 class="text-lg font-semibold mb-2 text-blue-700">添加新班级</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="newClassName" class="flex-1 p-4 border border-gray-300 rounded-lg text-lg" placeholder="输入新班级名称">
+                    <button id="addNewClass" class="px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition text-lg touch-button">添加</button>
+                </div>
+            </div>
+            
+            <!-- 班级列表 -->
+            <div class="mb-4">
+                <h4 class="text-lg font-semibold mb-2">现有班级</h4>
+                <div id="classesList" class="space-y-3">
+                    <!-- 班级列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <div class="flex justify-end mt-4">
+                <button id="closeManageClasses" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 随机点名模态框 -->
+    <div id="randomCallModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md fade-in modal-container text-center">
+            <h3 class="text-xl font-bold mb-4">随机点名</h3>
+            <div id="randomCallDisplay" class="text-4xl font-bold text-blue-600 my-8 min-h-[60px] flex items-center justify-center">
+                <!-- 这里显示随机选中的学生 -->
+            </div>
+            <div class="mb-4">
+                <button id="startRandomCall" class="px-6 py-4 bg-pink-500 hover:bg-pink-600 text-white rounded-lg transition text-xl touch-button w-full">
+                    <i class="fas fa-random mr-2"></i>开始随机点名
+                </button>
+            </div>
+            <div class="flex justify-center gap-2">
+                <button id="closeRandomCall" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 分组管理模态框 -->
+    <div id="manageGroupsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto custom-scrollbar fade-in modal-container">
+            <h3 class="text-xl font-bold mb-4">分组管理</h3>
+            
+            <!-- 添加新分组 -->
+            <div class="mb-6 p-4 bg-orange-50 rounded-lg">
+                <h4 class="text-lg font-semibold mb-2 text-orange-700">添加新分组</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="newGroupName" class="flex-1 p-4 border border-gray-300 rounded-lg text-lg" placeholder="输入新分组名称">
+                    <button id="addNewGroup" class="px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition text-lg touch-button">添加</button>
+                </div>
+            </div>
+            
+            <!-- 自动分组 -->
+            <div class="mb-6 p-4 bg-green-50 rounded-lg">
+                <h4 class="text-lg font-semibold mb-2 text-green-700">自动分组</h4>
+                <div class="flex gap-2 items-center">
+                    <span class="text-gray-700">分成</span>
+                    <input type="number" id="groupCount" class="w-20 p-3 border border-gray-300 rounded-lg text-lg" min="2" max="10" value="4">
+                    <span class="text-gray-700">个小组</span>
+                    <button id="autoGroup" class="px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition text-lg touch-button ml-2">自动分组</button>
+                </div>
+            </div>
+            
+            <!-- 分组列表 -->
+            <div class="mb-4">
+                <h4 class="text-lg font-semibold mb-2">现有分组</h4>
+                <div id="groupsList" class="space-y-3">
+                    <!-- 分组列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <div class="flex justify-end mt-4">
+                <button id="closeManageGroups" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 历史记录模态框 -->
+    <div id="historyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto custom-scrollbar fade-in modal-container">
+            <h3 class="text-xl font-bold mb-4">扣分历史记录</h3>
+            <div class="mb-4">
+                <label class="block text-gray-700 mb-2">筛选学生：</label>
+                <select id="historyStudentFilter" class="w-full p-3 border border-gray-300 rounded-lg text-lg">
+                    <option value="all">所有学生</option>
+                    <!-- 学生选项将通过JavaScript动态生成 -->
+                </select>
+            </div>
+            <div id="historyList" class="space-y-3">
+                <!-- 历史记录将通过JavaScript动态生成 -->
+            </div>
+            <div class="flex justify-end mt-4">
+                <button id="closeHistory" class="px-4 py-3 bg-gray-300 hover:bg-gray-400 rounded-lg transition text-lg touch-button">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 文件导入输入（隐藏） -->
+    <input type="file" id="fileInput" accept=".txt" class="hidden">
+    
+    <script>
+        // 初始化数据
+        let classes = JSON.parse(localStorage.getItem('classPointsClasses')) || {
+            '三年（4）班': []
+        };
+        let currentClass = localStorage.getItem('classPointsCurrentClass') || '三年（4）班';
+        let groups = JSON.parse(localStorage.getItem('classPointsGroups')) || {
+            '三年（4）班': [
+                { id: 1, name: '第一组', students: [] },
+                { id: 2, name: '第二组', students: [] },
+                { id: 3, name: '第三组', students: [] },
+                { id: 4, name: '第四组', students: [] }
+            ]
+        };
+        
+        // 历史记录数据（只记录扣分）
+        let history = JSON.parse(localStorage.getItem('classPointsHistory')) || {};
+        
+        // DOM元素
+        const studentGrid = document.getElementById('studentGrid');
+        const groupView = document.getElementById('groupView');
+        const groupsContainer = document.getElementById('groupsContainer');
+        const classTitleElement = document.getElementById('classTitle');
+        const classSelector = document.getElementById('classSelector');
+        const messageElement = document.getElementById('message');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const app = document.getElementById('app');
+        
+        // 随机点名相关变量
+        let randomCallInterval = null;
+        let isRandomCallRunning = false;
+        
+        // 当前操作的学生索引
+        let currentStudentIndex = null;
+        
+        // 页面加载完成后初始化应用
+        window.addEventListener('load', function() {
+            // 模拟加载时间
+            setTimeout(() => {
+                loadingScreen.classList.add('hidden');
+                app.classList.remove('hidden');
+                initApp();
+            }, 1000);
+        });
+        
+        function initApp() {
+            updateClassTitle();
+            updateClassSelector();
+            updateGroupSelectors();
+            renderStudents();
+            renderGroupsView();
+            
+            // 视图切换
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有按钮的active类
+                    document.querySelectorAll('.tab-button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // 添加当前按钮的active类
+                    this.classList.add('active');
+                    
+                    // 切换视图
+                    const view = this.getAttribute('data-view');
+                    if (view === 'all') {
+                        studentGrid.classList.remove('hidden');
+                        groupView.classList.add('hidden');
+                    } else if (view === 'group') {
+                        studentGrid.classList.add('hidden');
+                        groupView.classList.remove('hidden');
+                    }
+                });
+            });
+            
+            // 班级选择器变化事件
+            classSelector.addEventListener('change', function() {
+                currentClass = this.value;
+                localStorage.setItem('classPointsCurrentClass', currentClass);
+                updateClassTitle();
+                updateGroupSelectors();
+                renderStudents();
+                renderGroupsView();
+                showMessage(`已切换到班级: ${currentClass}`, 'success');
+            });
+            
+            // 管理班级按钮事件
+            document.getElementById('manageClasses').addEventListener('click', function() {
+                renderClassesList();
+                document.getElementById('manageClassesModal').classList.remove('hidden');
+            });
+            
+            // 添加新班级按钮事件
+            document.getElementById('addNewClass').addEventListener('click', function() {
+                const newClassName = document.getElementById('newClassName').value.trim();
+                
+                if (newClassName) {
+                    if (classes[newClassName]) {
+                        alert(`班级 "${newClassName}" 已存在！`);
+                        return;
+                    }
+                    
+                    classes[newClassName] = [];
+                    groups[newClassName] = [
+                        { id: 1, name: '第一组', students: [] },
+                        { id: 2, name: '第二组', students: [] },
+                        { id: 3, name: '第三组', students: [] },
+                        { id: 4, name: '第四组', students: [] }
+                    ];
+                    saveClasses();
+                    saveGroups();
+                    renderClassesList();
+                    updateClassSelector();
+                    document.getElementById('newClassName').value = '';
+                    showMessage(`已添加新班级: ${newClassName}`, 'success');
+                } else {
+                    alert('请输入班级名称！');
+                }
+            });
+            
+            // 关闭班级管理模态框
+            document.getElementById('closeManageClasses').addEventListener('click', function() {
+                document.getElementById('manageClassesModal').classList.add('hidden');
+            });
+            
+            // 分组管理按钮事件
+            document.getElementById('manageGroups').addEventListener('click', function() {
+                renderGroupsList();
+                document.getElementById('manageGroupsModal').classList.remove('hidden');
+            });
+            
+            // 添加新分组按钮事件
+            document.getElementById('addNewGroup').addEventListener('click', function() {
+                const newGroupName = document.getElementById('newGroupName').value.trim();
+                
+                if (newGroupName) {
+                    const currentGroups = getCurrentGroups();
+                    const newGroupId = currentGroups.length > 0 ? 
+                        Math.max(...currentGroups.map(g => g.id)) + 1 : 1;
+                    
+                    currentGroups.push({
+                        id: newGroupId,
+                        name: newGroupName,
+                        students: []
+                    });
+                    
+                    setCurrentGroups(currentGroups);
+                    renderGroupsList();
+                    updateGroupSelectors();
+                    document.getElementById('newGroupName').value = '';
+                    showMessage(`已添加新分组: ${newGroupName}`, 'success');
+                } else {
+                    alert('请输入分组名称！');
+                }
+            });
+            
+            // 自动分组按钮事件
+            document.getElementById('autoGroup').addEventListener('click', function() {
+                autoGroupStudents();
+            });
+            
+            // 关闭分组管理模态框
+            document.getElementById('closeManageGroups').addEventListener('click', function() {
+                document.getElementById('manageGroupsModal').classList.add('hidden');
+            });
+            
+            // 全班加分按钮事件
+            document.getElementById('addAllPoints').addEventListener('click', function() {
+                document.getElementById('addAllPointsModal').classList.remove('hidden');
+                document.getElementById('pointsInput').value = 1;
+                document.getElementById('pointsInput').focus();
+            });
+            
+            // 全班加分确认按钮事件
+            document.getElementById('confirmAddAllPoints').addEventListener('click', function() {
+                const points = parseInt(document.getElementById('pointsInput').value);
+                const students = getCurrentStudents();
+                
+                if (!isNaN(points) && points > 0) {
+                    students.forEach(student => {
+                        student.points += points;
+                    });
+                    
+                    setCurrentStudents(students);
+                    renderStudents();
+                    renderGroupsView();
+                    document.getElementById('addAllPointsModal').classList.add('hidden');
+                    showMessage(`已增加全班积分 ${points} 分`, 'success');
+                } else {
+                    alert('请输入有效的正数！');
+                }
+            });
+            
+            // 全班加分取消按钮事件
+            document.getElementById('cancelAddAllPoints').addEventListener('click', function() {
+                document.getElementById('addAllPointsModal').classList.add('hidden');
+            });
+            
+            // 全班清零按钮事件
+            document.getElementById('resetAllPoints').addEventListener('click', function() {
+                if (confirm('确定要将全班积分清零吗？')) {
+                    const students = getCurrentStudents();
+                    students.forEach(student => {
+                        student.points = 0;
+                    });
+                    
+                    setCurrentStudents(students);
+                    renderStudents();
+                    renderGroupsView();
+                    showMessage('全班积分已清零', 'success');
+                }
+            });
+            
+            // 排行榜按钮事件
+            document.getElementById('showRanking').addEventListener('click', function() {
+                const rankingList = document.getElementById('rankingList');
+                rankingList.innerHTML = '';
+                
+                const students = getCurrentStudents();
+                // 创建学生副本并排序
+                const sortedStudents = [...students].sort((a, b) => b.points - a.points);
+                
+                if (sortedStudents.length === 0) {
+                    rankingList.innerHTML = '<p class="text-center text-gray-500 py-4 text-lg">暂无学生数据</p>';
+                } else {
+                    sortedStudents.forEach((student, index) => {
+                        const rankItem = document.createElement('div');
+                        rankItem.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg';
+                        
+                        let medal = '';
+                        if (index === 0) medal = '🥇';
+                        else if (index === 1) medal = '🥈';
+                        else if (index === 2) medal = '🥉';
+                        
+                        rankItem.innerHTML = `
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">${medal}</span>
+                                <span class="font-medium text-lg">${student.name}</span>
+                            </div>
+                            <span class="font-bold text-lg ${student.points >= 0 ? 'text-red-600' : 'text-red-400'}">${student.points} 分</span>
+                        `;
+                        rankingList.appendChild(rankItem);
+                    });
+                }
+                
+                document.getElementById('rankingModal').classList.remove('hidden');
+            });
+            
+            // 关闭排行榜按钮事件
+            document.getElementById('closeRanking').addEventListener('click', function() {
+                document.getElementById('rankingModal').classList.add('hidden');
+            });
+            
+            // 导入积分按钮事件
+            document.getElementById('importPoints').addEventListener('click', function() {
+                document.getElementById('fileInput').click();
+            });
+            
+            // 文件输入变化事件
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const content = event.target.result;
+                    const lines = content.split('\n');
+                    const newStudents = [];
+                    
+                    lines.forEach(line => {
+                        if (line.trim()) {
+                            const parts = line.split('，');
+                            if (parts.length === 2) {
+                                const name = parts[0].trim();
+                                const points = parseInt(parts[1].trim());
+                                
+                                if (name && !isNaN(points)) {
+                                    newStudents.push({ name, points, groupId: 0 });
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (newStudents.length > 0) {
+                        setCurrentStudents(newStudents);
+                        renderStudents();
+                        renderGroupsView();
+                        showMessage(`成功导入 ${newStudents.length} 名学生数据`, 'success');
+                    } else {
+                        alert('文件格式不正确！请确保文件内容格式为："学生姓名，积分"，每行一个学生。');
+                    }
+                    
+                    // 重置文件输入
+                    document.getElementById('fileInput').value = '';
+                };
+                
+                reader.readAsText(file);
+            });
+            
+            // 导出积分按钮事件
+            document.getElementById('exportPoints').addEventListener('click', function() {
+                const students = getCurrentStudents();
+                if (students.length === 0) {
+                    alert('没有学生数据可以导出！');
+                    return;
+                }
+                
+                let content = '';
+                students.forEach(student => {
+                    content += `${student.name}，${student.points}\n`;
+                });
+                
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${currentClass}积分数据.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showMessage('积分数据已导出', 'success');
+            });
+            
+            // 添加学生按钮事件
+            document.getElementById('addStudent').addEventListener('click', function() {
+                document.getElementById('addStudentModal').classList.remove('hidden');
+                document.getElementById('studentNameInput').value = '';
+                document.getElementById('studentGroupSelect').value = '0';
+                document.getElementById('studentNameInput').focus();
+            });
+            
+            // 添加学生确认按钮事件
+            document.getElementById('confirmAddStudent').addEventListener('click', function() {
+                const name = document.getElementById('studentNameInput').value.trim();
+                const groupId = parseInt(document.getElementById('studentGroupSelect').value);
+                const students = getCurrentStudents();
+                
+                if (name) {
+                    // 检查是否已存在同名学生
+                    const exists = students.some(student => student.name === name);
+                    if (exists) {
+                        alert(`学生 "${name}" 已存在！`);
+                        return;
+                    }
+                    
+                    students.unshift({ name, points: 0, groupId });
+                    setCurrentStudents(students);
+                    renderStudents();
+                    renderGroupsView();
+                    document.getElementById('addStudentModal').classList.add('hidden');
+                    showMessage(`已添加学生 "${name}"`, 'success');
+                } else {
+                    alert('请输入学生姓名！');
+                }
+            });
+            
+            // 添加学生取消按钮事件
+            document.getElementById('cancelAddStudent').addEventListener('click', function() {
+                document.getElementById('addStudentModal').classList.add('hidden');
+            });
+            
+            // 批量添加学生按钮事件
+            document.getElementById('batchAddStudents').addEventListener('click', function() {
+                document.getElementById('batchAddStudentsModal').classList.remove('hidden');
+                document.getElementById('batchStudentNames').value = '';
+                document.getElementById('studentCount').textContent = '0';
+                document.getElementById('batchStudentNames').focus();
+            });
+            
+            // 批量添加学生输入变化事件
+            document.getElementById('batchStudentNames').addEventListener('input', function() {
+                const names = this.value.split('\n').filter(name => name.trim() !== '');
+                document.getElementById('studentCount').textContent = names.length;
+            });
+            
+            // 清空批量输入按钮事件
+            document.getElementById('clearBatchInput').addEventListener('click', function() {
+                document.getElementById('batchStudentNames').value = '';
+                document.getElementById('studentCount').textContent = '0';
+            });
+            
+            // 批量添加学生确认按钮事件
+            document.getElementById('confirmBatchAddStudents').addEventListener('click', function() {
+                const namesText = document.getElementById('batchStudentNames').value;
+                const names = namesText.split('\n')
+                    .map(name => name.trim())
+                    .filter(name => name !== '');
+                const students = getCurrentStudents();
+                
+                if (names.length === 0) {
+                    alert('请输入至少一个学生姓名！');
+                    return;
+                }
+                
+                let addedCount = 0;
+                let skippedCount = 0;
+                
+                names.forEach(name => {
+                    // 检查是否已存在同名学生
+                    const exists = students.some(student => student.name === name);
+                    if (!exists) {
+                        students.unshift({ name, points: 0, groupId: 0 });
+                        addedCount++;
+                    } else {
+                        skippedCount++;
+                    }
+                });
+                
+                setCurrentStudents(students);
+                renderStudents();
+                renderGroupsView();
+                document.getElementById('batchAddStudentsModal').classList.add('hidden');
+                
+                let message = `已成功添加 ${addedCount} 名学生`;
+                if (skippedCount > 0) {
+                    message += `，跳过 ${skippedCount} 名已存在学生`;
+                }
+                showMessage(message, 'success');
+            });
+            
+            // 批量添加学生取消按钮事件
+            document.getElementById('cancelBatchAddStudents').addEventListener('click', function() {
+                document.getElementById('batchAddStudentsModal').classList.add('hidden');
+            });
+            
+            // 随机点名按钮事件
+            document.getElementById('randomCall').addEventListener('click', function() {
+                document.getElementById('randomCallModal').classList.remove('hidden');
+                // 重置随机点名状态
+                isRandomCallRunning = false;
+                document.getElementById('startRandomCall').innerHTML = '<i class="fas fa-random mr-2"></i>开始随机点名';
+                document.getElementById('startRandomCall').classList.remove('bg-red-500', 'hover:bg-red-600');
+                document.getElementById('startRandomCall').classList.add('bg-pink-500', 'hover:bg-pink-600');
+                document.getElementById('randomCallDisplay').classList.remove('random-call-animation', 'bounce');
+                document.getElementById('randomCallDisplay').textContent = '等待点名...';
+                
+                // 清除之前的高亮
+                const studentCards = document.querySelectorAll('.student-card');
+                studentCards.forEach(card => {
+                    card.classList.remove('selected-student');
+                });
+            });
+            
+            // 开始随机点名按钮事件
+            document.getElementById('startRandomCall').addEventListener('click', function() {
+                startRandomCall();
+            });
+            
+            // 关闭随机点名模态框
+            document.getElementById('closeRandomCall').addEventListener('click', function() {
+                document.getElementById('randomCallModal').classList.add('hidden');
+                // 停止随机点名
+                if (isRandomCallRunning) {
+                    isRandomCallRunning = false;
+                    clearInterval(randomCallInterval);
+                }
+            });
+            
+            // 历史记录按钮事件
+            document.getElementById('showHistory').addEventListener('click', function() {
+                renderHistoryList();
+                document.getElementById('historyModal').classList.remove('hidden');
+            });
+            
+            // 历史记录筛选变化事件
+            document.getElementById('historyStudentFilter').addEventListener('change', function() {
+                renderHistoryList();
+            });
+            
+            // 关闭历史记录模态框
+            document.getElementById('closeHistory').addEventListener('click', function() {
+                document.getElementById('historyModal').classList.add('hidden');
+            });
+            
+            // 快速选择原因按钮事件
+            document.querySelectorAll('.quick-reason').forEach(button => {
+                button.addEventListener('click', function() {
+                    const reason = this.getAttribute('data-reason');
+                    document.getElementById('deductReason').value = reason;
+                });
+            });
+            
+            // 确认扣分按钮事件
+            document.getElementById('confirmDeductPoints').addEventListener('click', function() {
+                const students = getCurrentStudents();
+                const reason = document.getElementById('deductReason').value.trim();
+                
+                if (reason === '') {
+                    alert('请输入扣分原因！');
+                    return;
+                }
+                
+                students[currentStudentIndex].points -= 1;
+                
+                // 记录历史（只记录扣分）
+                addHistoryRecord(students[currentStudentIndex].name, -1, reason);
+                
+                setCurrentStudents(students);
+                renderStudents();
+                renderGroupsView();
+                document.getElementById('deductPointsModal').classList.add('hidden');
+                showMessage(`已扣除 ${students[currentStudentIndex].name} 1分`, 'success');
+            });
+            
+            // 取消扣分按钮事件
+            document.getElementById('cancelDeductPoints').addEventListener('click', function() {
+                document.getElementById('deductPointsModal').classList.add('hidden');
+            });
+            
+            // 点击模态框外部关闭模态框
+            document.querySelectorAll('.fixed.inset-0').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
+            });
+            
+            // Safari触摸事件优化
+            document.addEventListener('touchstart', function() {}, {passive: true});
+        }
+        
+        // 获取当前班级的学生数据
+        function getCurrentStudents() {
+            return classes[currentClass] || [];
+        }
+        
+        // 设置当前班级的学生数据
+        function setCurrentStudents(students) {
+            classes[currentClass] = students;
+            saveClasses();
+        }
+        
+        // 获取当前班级的分组数据
+        function getCurrentGroups() {
+            return groups[currentClass] || [];
+        }
+        
+        // 设置当前班级的分组数据
+        function setCurrentGroups(groupData) {
+            groups[currentClass] = groupData;
+            saveGroups();
+        }
+        
+        // 更新班级标题
+        function updateClassTitle() {
+            classTitleElement.innerHTML = `${currentClass}积分系统 <span class="ml-2 text-yellow-500">✨</span>`;
+        }
+        
+        // 更新班级选择器
+        function updateClassSelector() {
+            classSelector.innerHTML = '';
+            Object.keys(classes).forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                if (className === currentClass) {
+                    option.selected = true;
+                }
+                classSelector.appendChild(option);
+            });
+        }
+        
+        // 更新分组选择器
+        function updateGroupSelectors() {
+            const groupSelect = document.getElementById('studentGroupSelect');
+            groupSelect.innerHTML = '<option value="0">未分组</option>';
+            
+            const currentGroups = getCurrentGroups();
+            currentGroups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group.id;
+                option.textContent = group.name;
+                groupSelect.appendChild(option);
+            });
+        }
+        
+        // 更新历史记录学生筛选器
+        function updateHistoryStudentFilter() {
+            const filterSelect = document.getElementById('historyStudentFilter');
+            filterSelect.innerHTML = '<option value="all">所有学生</option>';
+            
+            const students = getCurrentStudents();
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.name;
+                option.textContent = student.name;
+                filterSelect.appendChild(option);
+            });
+        }
+        
+        // 显示消息
+        function showMessage(text, type = 'info') {
+            messageElement.textContent = text;
+            messageElement.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 fade-in ${type === 'success' ? 'bg-green-500 text-white' : type === 'error' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`;
+            messageElement.classList.remove('hidden');
+            
+            setTimeout(() => {
+                messageElement.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // 渲染学生卡片
+        function renderStudents() {
+            const students = getCurrentStudents();
+            studentGrid.innerHTML = '';
+            
+            if (students.length === 0) {
+                studentGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white rounded-xl shadow-sm">
+                        <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-xl text-gray-500">暂无学生数据</p>
+                        <p class="text-gray-400 mt-2">点击"添加学生"或"批量添加"按钮添加学生</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            students.forEach((student, index) => {
+                const studentCard = document.createElement('div');
+                studentCard.className = `student-card bg-white rounded-xl shadow-md p-4 flex flex-col items-center group-${student.groupId || 0}`;
+                studentCard.innerHTML = `
+                    <div class="flex justify-between w-full mb-2">
+                        <button class="text-red-500 hover:text-red-700 delete-student touch-button" data-index="${index}" title="删除学生">
+                            <i class="fas fa-trash text-lg"></i>
+                        </button>
+                        <span class="text-gray-500">#${index + 1}</span>
+                    </div>
+                    <div class="text-xl font-bold text-black mb-2 text-center">${student.name}</div>
+                    <div class="text-2xl font-bold ${student.points >= 0 ? 'text-red-600' : 'text-red-400'} mb-4">${student.points}</div>
+                    <div class="flex justify-between w-full">
+                        <button class="bg-red-500 hover:bg-red-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-xl deduct-btn touch-button" data-index="${index}" title="扣分">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button class="bg-green-500 hover:bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center text-xl add-btn touch-button" data-index="${index}" title="加分">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                `;
+                studentGrid.appendChild(studentCard);
+            });
+            
+            // 添加扣分按钮事件监听
+            document.querySelectorAll('.deduct-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    currentStudentIndex = index;
+                    
+                    document.getElementById('deductPointsModal').classList.remove('hidden');
+                    document.getElementById('deductReason').value = '';
+                });
+            });
+            
+            // 添加加分按钮事件监听（直接加分，不记录原因）
+            document.querySelectorAll('.add-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const students = getCurrentStudents();
+                    
+                    students[index].points += 1;
+                    
+                    setCurrentStudents(students);
+                    renderStudents();
+                    renderGroupsView();
+                    showMessage(`已增加 ${students[index].name} 1分`, 'success');
+                });
+            });
+            
+            // 添加删除按钮事件监听
+            document.querySelectorAll('.delete-student').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const students = getCurrentStudents();
+                    const studentName = students[index].name;
+                    
+                    if (confirm(`确定要删除学生 "${studentName}" 吗？`)) {
+                        students.splice(index, 1);
+                        setCurrentStudents(students);
+                        renderStudents();
+                        renderGroupsView();
+                        showMessage(`已删除学生 "${studentName}"`, 'success');
+                    }
+                });
+            });
+        }
+        
+        // 渲染分组视图
+        function renderGroupsView() {
+            const currentGroups = getCurrentGroups();
+            const students = getCurrentStudents();
+            
+            groupsContainer.innerHTML = '';
+            
+            if (currentGroups.length === 0) {
+                groupsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white rounded-xl shadow-sm">
+                        <i class="fas fa-object-group text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-xl text-gray-500">暂无分组数据</p>
+                        <p class="text-gray-400 mt-2">点击"分组管理"按钮创建分组</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            currentGroups.forEach(group => {
+                const groupStudents = students.filter(student => student.groupId === group.id);
+                const groupPoints = groupStudents.reduce((total, student) => total + student.points, 0);
+                
+                const groupCard = document.createElement('div');
+                groupCard.className = `group-card bg-white rounded-xl shadow-md p-4 group-${group.id}`;
+                groupCard.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">${group.name}</h3>
+                        <div class="flex gap-2">
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm group-add-points touch-button" data-group="${group.id}">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm group-remove-points touch-button" data-group="${group.id}">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-center mb-4 ${groupPoints >= 0 ? 'text-red-600' : 'text-red-400'}">${groupPoints} 分</div>
+                    <div class="space-y-2">
+                        ${groupStudents.length > 0 ? 
+                            groupStudents.map(student => `
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                    <span>${student.name}</span>
+                                    <span class="font-bold ${student.points >= 0 ? 'text-red-600' : 'text-red-400'}">${student.points}</span>
+                                </div>
+                            `).join('') : 
+                            '<p class="text-center text-gray-500 py-2">暂无学生</p>'
+                        }
+                    </div>
+                `;
+                groupsContainer.appendChild(groupCard);
+            });
+            
+            // 添加小组加分按钮事件（直接加分，不记录原因）
+            document.querySelectorAll('.group-add-points').forEach(button => {
+                button.addEventListener('click', function() {
+                    const groupId = parseInt(this.getAttribute('data-group'));
+                    const students = getCurrentStudents();
+                    
+                    students.forEach(student => {
+                        if (student.groupId === groupId) {
+                            student.points += 1;
+                        }
+                    });
+                    
+                    setCurrentStudents(students);
+                    renderStudents();
+                    renderGroupsView();
+                    showMessage(`已为小组增加积分`, 'success');
+                });
+            });
+            
+            // 添加小组扣分按钮事件（需要记录原因）
+            document.querySelectorAll('.group-remove-points').forEach(button => {
+                button.addEventListener('click', function() {
+                    const groupId = parseInt(this.getAttribute('data-group'));
+                    const students = getCurrentStudents();
+                    
+                    // 获取小组学生姓名
+                    const groupStudents = students.filter(student => student.groupId === groupId);
+                    const studentNames = groupStudents.map(student => student.name).join('、');
+                    
+                    if (confirm(`确定要为小组 "${studentNames}" 扣分吗？`)) {
+                        // 弹出扣分原因模态框
+                        document.getElementById('deductPointsModal').classList.remove('hidden');
+                        document.getElementById('deductReason').value = '';
+                        
+                        // 设置当前操作为小组扣分
+                        currentStudentIndex = null;
+                        currentGroupId = groupId;
+                    }
+                });
+            });
+        }
+        
+        // 渲染班级列表
+        function renderClassesList() {
+            const classesList = document.getElementById('classesList');
+            classesList.innerHTML = '';
+            
+            Object.keys(classes).forEach(className => {
+                const classItem = document.createElement('div');
+                classItem.className = 'class-card bg-white rounded-lg p-4 flex justify-between items-center';
+                classItem.innerHTML = `
+                    <div>
+                        <span class="font-medium text-lg">${className}</span>
+                        <span class="text-gray-500 ml-2">(${classes[className].length} 名学生)</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="switch-class px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-lg touch-button" data-class="${className}">切换</button>
+                        ${className !== currentClass ? `<button class="delete-class px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-lg touch-button" data-class="${className}">删除</button>` : ''}
+                    </div>
+                `;
+                classesList.appendChild(classItem);
+            });
+            
+            // 添加切换班级按钮事件
+            document.querySelectorAll('.switch-class').forEach(button => {
+                button.addEventListener('click', function() {
+                    const className = this.getAttribute('data-class');
+                    currentClass = className;
+                    localStorage.setItem('classPointsCurrentClass', currentClass);
+                    updateClassTitle();
+                    updateClassSelector();
+                    renderStudents();
+                    renderGroupsView();
+                    document.getElementById('manageClassesModal').classList.add('hidden');
+                    showMessage(`已切换到班级: ${className}`, 'success');
+                });
+            });
+            
+            // 添加删除班级按钮事件
+            document.querySelectorAll('.delete-class').forEach(button => {
+                button.addEventListener('click', function() {
+                    const className = this.getAttribute('data-class');
+                    
+                    if (confirm(`确定要删除班级 "${className}" 吗？此操作无法撤销！`)) {
+                        delete classes[className];
+                        delete groups[className];
+                        saveClasses();
+                        saveGroups();
+                        renderClassesList();
+                        updateClassSelector();
+                        
+                        // 如果删除的是当前班级，切换到第一个班级
+                        if (currentClass === className) {
+                            const classNames = Object.keys(classes);
+                            if (classNames.length > 0) {
+                                currentClass = classNames[0];
+                                localStorage.setItem('classPointsCurrentClass', currentClass);
+                                updateClassTitle();
+                                updateClassSelector();
+                                renderStudents();
+                                renderGroupsView();
+                            } else {
+                                // 如果没有班级了，创建一个默认班级
+                                classes = { '默认班级': [] };
+                                groups = { '默认班级': [] };
+                                currentClass = '默认班级';
+                                saveClasses();
+                                saveGroups();
+                                localStorage.setItem('classPointsCurrentClass', currentClass);
+                                updateClassTitle();
+                                updateClassSelector();
+                                renderStudents();
+                                renderGroupsView();
+                            }
+                        }
+                        
+                        showMessage(`已删除班级: ${className}`, 'success');
+                    }
+                });
+            });
+        }
+        
+        // 渲染分组列表
+        function renderGroupsList() {
+            const groupsList = document.getElementById('groupsList');
+            groupsList.innerHTML = '';
+            
+            const currentGroups = getCurrentGroups();
+            
+            if (currentGroups.length === 0) {
+                groupsList.innerHTML = '<p class="text-center text-gray-500 py-4">暂无分组</p>';
+                return;
+            }
+            
+            currentGroups.forEach((group, index) => {
+                const students = getCurrentStudents();
+                const groupStudents = students.filter(student => student.groupId === group.id);
+                
+                const groupItem = document.createElement('div');
+                groupItem.className = 'group-card bg-white rounded-lg p-4 flex justify-between items-center';
+                groupItem.innerHTML = `
+                    <div>
+                        <span class="font-medium text-lg">${group.name}</span>
+                        <span class="text-gray-500 ml-2">(${groupStudents.length} 名学生)</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="delete-group px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded text-lg touch-button" data-index="${index}">删除</button>
+                    </div>
+                `;
+                groupsList.appendChild(groupItem);
+            });
+            
+            // 添加删除分组按钮事件
+            document.querySelectorAll('.delete-group').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const currentGroups = getCurrentGroups();
+                    const groupName = currentGroups[index].name;
+                    
+                    if (confirm(`确定要删除分组 "${groupName}" 吗？此操作无法撤销！`)) {
+                        // 将分组中的学生设为未分组
+                        const students = getCurrentStudents();
+                        students.forEach(student => {
+                            if (student.groupId === currentGroups[index].id) {
+                                student.groupId = 0;
+                            }
+                        });
+                        setCurrentStudents(students);
+                        
+                        // 删除分组
+                        currentGroups.splice(index, 1);
+                        setCurrentGroups(currentGroups);
+                        
+                        renderGroupsList();
+                        renderStudents();
+                        renderGroupsView();
+                        updateGroupSelectors();
+                        
+                        showMessage(`已删除分组: ${groupName}`, 'success');
+                    }
+                });
+            });
+        }
+        
+        // 渲染历史记录列表
+        function renderHistoryList() {
+            updateHistoryStudentFilter();
+            
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            const studentFilter = document.getElementById('historyStudentFilter').value;
+            let classHistory = history[currentClass] || [];
+            
+            // 如果筛选特定学生，只显示该学生的记录
+            if (studentFilter !== 'all') {
+                classHistory = classHistory.filter(record => record.student === studentFilter);
+            }
+            
+            if (classHistory.length === 0) {
+                historyList.innerHTML = '<p class="text-center text-gray-500 py-8">暂无扣分记录</p>';
+                return;
+            }
+            
+            // 按时间倒序排列（最新的在前面）
+            classHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            classHistory.forEach(record => {
+                const historyItem = document.createElement('div');
+                historyItem.className = `history-item bg-white rounded-lg p-4`;
+                historyItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <span class="font-bold text-lg">${record.student}</span>
+                            <span class="ml-2 font-bold text-red-600">-1分</span>
+                        </div>
+                        <span class="text-gray-500 text-sm">${formatDate(record.timestamp)}</span>
+                    </div>
+                    <div class="text-gray-700">${record.reason}</div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // 自动分组功能
+        function autoGroupStudents() {
+            const groupCount = parseInt(document.getElementById('groupCount').value) || 4;
+            const students = getCurrentStudents();
+            const currentGroups = getCurrentGroups();
+            
+            if (students.length === 0) {
+                alert('当前班级没有学生，无法进行自动分组！');
+                return;
+            }
+            
+            // 清空现有分组
+            currentGroups.forEach(group => {
+                group.students = [];
+            });
+            
+            // 如果分组数量不够，创建新的分组
+            while (currentGroups.length < groupCount) {
+                const newGroupId = currentGroups.length + 1;
+                currentGroups.push({
+                    id: newGroupId,
+                    name: `第${newGroupId}组`,
+                    students: []
+                });
+            }
+            
+            // 如果分组数量过多，删除多余分组
+            if (currentGroups.length > groupCount) {
+                currentGroups.splice(groupCount);
+            }
+            
+            // 随机分配学生到各组
+            const shuffledStudents = [...students].sort(() => Math.random() - 0.5);
+            
+            shuffledStudents.forEach((student, index) => {
+                const groupIndex = index % groupCount;
+                student.groupId = currentGroups[groupIndex].id;
+            });
+            
+            setCurrentStudents(students);
+            setCurrentGroups(currentGroups);
+            
+            renderStudents();
+            renderGroupsView();
+            renderGroupsList();
+            updateGroupSelectors();
+            
+            showMessage(`已自动将学生分成 ${groupCount} 个小组`, 'success');
+        }
+        
+        // 保存班级数据到localStorage
+        function saveClasses() {
+            localStorage.setItem('classPointsClasses', JSON.stringify(classes));
+        }
+        
+        // 保存分组数据到localStorage
+        function saveGroups() {
+            localStorage.setItem('classPointsGroups', JSON.stringify(groups));
+        }
+        
+        // 保存历史记录数据到localStorage
+        function saveHistory() {
+            localStorage.setItem('classPointsHistory', JSON.stringify(history));
+        }
+        
+        // 添加历史记录（只记录扣分）
+        function addHistoryRecord(student, points, reason) {
+            if (!history[currentClass]) {
+                history[currentClass] = [];
+            }
+            
+            history[currentClass].push({
+                student,
+                points,
+                reason,
+                timestamp: new Date().toISOString()
+            });
+            
+            saveHistory();
+        }
+        
+        // 格式化日期显示
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        // 随机点名功能
+        function startRandomCall() {
+            const students = getCurrentStudents();
+            if (students.length === 0) {
+                alert('当前班级没有学生，无法进行随机点名！');
+                return;
+            }
+            
+            const displayElement = document.getElementById('randomCallDisplay');
+            const startButton = document.getElementById('startRandomCall');
+            
+            if (!isRandomCallRunning) {
+                // 开始随机点名
+                isRandomCallRunning = true;
+                startButton.innerHTML = '<i class="fas fa-stop mr-2"></i>停止点名';
+                startButton.classList.remove('bg-pink-500', 'hover:bg-pink-600');
+                startButton.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                displayElement.classList.add('random-call-animation');
+                
+                randomCallInterval = setInterval(() => {
+                    const randomIndex = Math.floor(Math.random() * students.length);
+                    displayElement.textContent = students[randomIndex].name;
+                }, 100);
+            } else {
+                // 停止随机点名
+                isRandomCallRunning = false;
+                startButton.innerHTML = '<i class="fas fa-random mr-2"></i>开始随机点名';
+                startButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+                startButton.classList.add('bg-pink-500', 'hover:bg-pink-600');
+                
+                displayElement.classList.remove('random-call-animation');
+                displayElement.classList.add('bounce');
+                
+                setTimeout(() => {
+                    displayElement.classList.remove('bounce');
+                }, 1000);
+                
+                clearInterval(randomCallInterval);
+                
+                // 高亮显示选中的学生
+                const selectedStudent = displayElement.textContent;
+                const studentCards = document.querySelectorAll('.student-card');
+                studentCards.forEach(card => {
+                    const studentName = card.querySelector('.text-xl').textContent;
+                    if (studentName === selectedStudent) {
+                        card.classList.add('selected-student');
+                    } else {
+                        card.classList.remove('selected-student');
+                    }
+                });
+                
+                showMessage(`随机点名结果: ${selectedStudent}`, 'success');
+            }
+        }
+    </script>
+</body>
+</html>
